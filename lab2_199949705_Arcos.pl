@@ -164,18 +164,42 @@ createScene(20, 20, 8, _, _, Scene):- Scene = [20, 20, [1, 1], [2, 1], [3, 1], [
 									[3, 20, 14], [3, 20, 15], [3, 20, 16], [3, 20, 17], [3, 20, 18], [1, 1, 1, 10], [0, 1, 20, 19], [0, 2, 19, 17], [0, 3, 18, 15], [0, 4, 17, 13],
 									[0, 5, 16, 11], [0, 6, 15, 10], [0, 7, 14, 9], [0, 8, 13, 9]], !.
 
+%Predicado que permite consultar si un escenario cumple con los criterios para ser considerado valido.
+%Entrada: -Escenario del juego
+%Salida: True o False
 checkScene(Scene):- is_list(Scene), obtenerPosicion(Scene, 0, N), N > 0, obtenerPosicion(Scene, 1, M), M > 0, obtenerTDAs(Scene, 1, ListTDAs), verificarTDAs(ListTDAs), 
 					obtenerPosXY(ListTDAs, ListPosXY), verificarPosDistintas(ListPosXY), !.
+%Predicado que crea una lista con las posiciones ocupadas por los TDAs
+%Entrada: -Escenario del juego
+%		  -Cantidad inicial de la recursion
+%Salida: Lista con los TDAs del escenario del juego
 obtenerTDAs([_|Cdr], Cantidad, ListTDAs):- Cantidad == 2, ListTDAs = Cdr.
 obtenerTDAs([_|Cdr], Cantidad, ListTDAs):- Cantidad1 is Cantidad+1, obtenerTDAs(Cdr, Cantidad1, ListTDAs).
+%Predicado que verifica que cada TDA de la lista de TDAs cumplan los criterios para ser considerado como tal
+%Entrada: -Lista con los TDAs del escenario
+%Salida: True o false
 verificarTDAs([]):- !.
 verificarTDAs([Car|Cdr]):- is_list(Car), (esGusano(Car); esDisparo(Car); esSuelo(Car); esObstaculo(Car)), verificarTDAs(Cdr), !.
+%Predicado que crea una lista con las posiciones ocupadas por los TDAs
+%Entrada: -Lista con los TDAs del escenario del juego
+%Salida: Lista de dos elementos (ej: [PosX,PosY])
 obtenerPosXY([],[]).
 obtenerPosXY([Car|Cdr], [Cabeza|Cola]):- ((esGusano(Car), gusano_getPosX(Car, PosX), gusano_getPosY(Car, PosY));(esDisparo(Car), disparo_getPosX(Car, PosX), disparo_getPosY(Car, PosY));
 										(esObstaculo(Car), obstaculo_getPosX(Car, PosX), obstaculo_getPosY(Car,PosY));(esSuelo(Car), suelo_getPosX(Car, PosX), suelo_getPosY(Car,PosY))),
 										obtenerPosXY(Cdr, Cola), Cabeza = [PosX,PosY].
+%Predicado que verifica si algun elemento de la lista con las posiciones X e Y se repite
+%Entrada: -Lista con las posiciones X e Y de los TDAs
+%Salida: True o false
 verificarPosDistintas([]).										
 verificarPosDistintas([Car|Cdr]):- compararListas(Car, Cdr), verificarPosDistintas(Cdr), !.
+%Predicado que compara el primer elemento de la lista con las posiciones X e Y con los demas
+%Entrada: - Primer elemento de la Lista
+%		  - Cola de la lista
+%Salida: True or false
 compararListas(_, []).
-compararListas(TDA, [Car|Cdr]):- not(posXYIguales(TDA, Car)), compararListas(TDA, Cdr), !.
+compararListas(PosXY, [Car|Cdr]):- not(posXYIguales(PosXY, Car)), compararListas(PosXY, Cdr), !.
+%Predicado que compara que dos listas de dos elementos sean iguales
+%Entrada: -Primera Lista con la posicion X e Y de un TDA
+%		  -Segunda Lista con la posicion X e Y de un TDA
+%Salida: True o false
 posXYIguales([PosX,PosY], [PosX, PosY]).
