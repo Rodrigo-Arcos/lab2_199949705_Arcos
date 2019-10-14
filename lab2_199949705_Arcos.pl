@@ -217,6 +217,12 @@ compararListas(PosXY, [Car|Cdr]):- not(posXYIguales(PosXY, Car)), compararListas
 posXYIguales([PosX,PosY], [PosX, PosY]).
 
 %-----------------------------------------------moveMember-----------------------------------------------------------------------
+%Predicado que permite consultar si es posible mover un personaje
+%Entrada: -Escenaro del juego
+%		  -Personaje del equipo a mover
+%		  -Direccion del movimiento
+%		  -Parametro para generar valores pseudoaleatorios
+%Salida: Nuevo escenario del juego
 moveMember(SceneIn, _, MoveDir, _, SceneOut):- checkScene(SceneIn), MoveDir == 0, SceneOut = SceneIn.
 moveMember(SceneIn, Member, MoveDir, _, SceneOut):- checkScene(SceneIn), obtenerPosicion(SceneIn, 0, N), obtenerPosicion(SceneIn, 1, M), obtenerTDAs(SceneIn, 1, ListTDAs), 
 													buscarGusano(ListTDAs, 1, Member, TDAGusano), MoveDir > 0, obtenerPosXY(ListTDAs, ListPosXY), gusano_getId(TDAGusano, Id),
@@ -227,10 +233,23 @@ moveMember(SceneIn, Member, MoveDir, _, SceneOut):- checkScene(SceneIn), obtener
 													buscarGusano(ListTDAs, 1, Member, TDAGusano), MoveDir < 0, obtenerPosXY(ListTDAs, ListPosXY), gusano_getId(TDAGusano, Id),
 													gusano_getIdGusano(TDAGusano, Member), moverJugadorIzq(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir, TDAGusano, NewListTDAs),
 													SceneOut = [N, M|NewListTDAs].
-
+%Predicado que busca en la lista TDAs un TDA gusano
+%Entrada: -Lista con los TDAs del escenario
+%		  -Equipo del gusano a mover
+%		  -Personaje del equipo a mover
+%Salida: TDA de un gusano
 buscarGusano([Car|_], Id, Member, TDAGusano):- esGusano(Car), gusano_getId(Car, Id), gusano_getIdGusano(Car, Member), TDAGusano = Car.
 buscarGusano([_|Cdr], Id, Member, TDAGusano):- buscarGusano(Cdr, Id, Member, TDAGusano), !.
-
+%Predicado que realizo el movimiento de un personaje hacia la derecha
+%Entrada: -Cantidad de filas del escenario
+%		  -Cantidad de columnas del escenario
+%		  -Equipo del gusano a mover
+%		  -Personaje del equipo a mover
+%		  -Lista con los TDAs del escenario
+%		  -Lista con las posiciones X e Y de los TDAs
+%		  -Cantidad de movimientos a realizar
+%		  -TDA del gusano a mover
+%Salida: Lista con los TDAs del escenario actualizada
 moverJugadorDer(N, M, Id, Member, ListTDAs, _, _, TDAGusano, NewListTDAs):- (TDAGusano == []; (gusano_getPosX(TDAGusano, PosX), gusano_getPosY(TDAGusano, PosY),(PosX > M;PosX < 1;
 																			 PosY > N; PosY < 1))), eliminarGusano(ListTDAs, Id, Member, NewListTDAs), !.
 moverJugadorDer(_, _, _, _, ListTDAs, _, MoveDir, TDAGusano, NewListTDAs):- MoveDir == 0, modificarPosXYGusano(ListTDAs, TDAGusano, NewListTDAs), !.
@@ -251,7 +270,16 @@ moverJugadorDer(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir, TDAGusano, NewLi
 																			verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1], Salida1), Salida1 == 0,
 																			posXYCaidaGusano(ListPosXY, ListTDAs, [PosX1, PosY1], TDAGusano, TDAGusano1), MoveDir1 is MoveDir-1,
 																			moverJugadorDer(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir1, TDAGusano1, NewListTDAs).
-
+%Predicado que realizo el movimiento de un personaje hacia la izquierda
+%Entrada: -Cantidad de filas del escenario
+%		  -Cantidad de columnas del escenario
+%		  -Equipo del gusano a mover
+%		  -Personaje del equipo a mover
+%		  -Lista con los TDAs del escenario
+%		  -Lista con las posiciones X e Y de los TDAs
+%		  -Cantidad de movimientos a realizar
+%		  -TDA del gusano a mover
+%Salida: Lista con los TDAs del escenario actualizada
 moverJugadorIzq(N, M, Id, Member, ListTDAs, _, _, TDAGusano, NewListTDAs):- (TDAGusano == []; (gusano_getPosX(TDAGusano, PosX), gusano_getPosY(TDAGusano, PosY),(PosX > M;PosX < 1;
 																			 PosY > N; PosY < 1))), eliminarGusano(ListTDAs, Id, Member, NewListTDAs), !.
 moverJugadorIzq(_, _, _, _, ListTDAs, _, MoveDir, TDAGusano, NewListTDAs):- MoveDir == 0, modificarPosXYGusano(ListTDAs, TDAGusano, NewListTDAs), !.
@@ -272,21 +300,44 @@ moverJugadorIzq(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir, TDAGusano, NewLi
 																			verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1], Salida1), Salida1 == 0,
 																			posXYCaidaGusano(ListPosXY, ListTDAs, [PosX1, PosY1], TDAGusano, TDAGusano1), MoveDir1 is MoveDir+1,
 																			moverJugadorIzq(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir1, TDAGusano1, NewListTDAs).
-
+%Predicado que elimina un TDAGusano de la lista con los TDAs del escenario
+%Entrada: -Lista con los TDAs del escenario
+%		  -Equipo del gusano a mover
+%		  -Personaje del equipo a mover
+%Salida: Lista con los TDAs del escenario actualizada
 eliminarGusano([Car|Cdr], Id, Member, Cdr):- esGusano(Car), gusano_getId(Car, Id), gusano_getIdGusano(Car, Member).
 eliminarGusano([Car|Cdr], Id, Member, [Car|Cola]):- eliminarGusano(Cdr, Id, Member, Cola), !.
-
+%Predicado que modifica la posicion X e Y de un TDA gusano de la lista que contiene los TDAs del escenario
+%Entrada: -Lista con los TDAs del escenario
+%		  -TDA del gusano a modificar
+%Salida: Lista con los TDAs del escenario actualizada
 modificarPosXYGusano(ListTDAs, TDAGusano, NewListTDAs):- gusano_getPosX(TDAGusano, PosX), gusano_getPosY(TDAGusano, PosY), gusano_getId(TDAGusano, Id), 
 														gusano_getIdGusano(TDAGusano, Member), modificarGusano(ListTDAs, PosX, PosY, Id, Member, NewListTDAs), !.
-
+%Predicado que modifica la posicion X e Y de un TDA gusano
+%Entrada: -Lista con los TDAs del escenario
+%		  -Posicion X del gusano
+%		  -Posicion Y del gusano
+%		  -Equipo del gusano a mover
+%		  -Personaje del equipo a mover
+%Salida: Lista con los TDAs del escenario actualizada
 modificarGusano([Car|Cdr], PosX, PosY, Id, Member, [NewTDAGusano|Cdr]):- esGusano(Car), gusano_getId(Car, Id), gusano_getIdGusano(Car, Member), 
 																		gusano_setPosX(Car, PosX, TDAGusano),gusano_setPosY(TDAGusano, PosY, NewTDAGusano), !.
 modificarGusano([Car|Cdr], PosX, Pos, Id, Member, [Car|Cola]):- modificarGusano(Cdr, PosX, Pos, Id, Member, Cola).
-
+%Predicado que verifica si una posicion X e Y ya es utilizada por un TDA
+%Entrada: -Lista con las posiciones X e Y de los TDAs
+%		  -Lista con los TDAs del escenario
+%		  -Lista con la posicion X e Y
+%Salida: 0 si no se encuentra ocupada, 1 si es ocupada por un TDA obstaculo o suelo, 2 si es utilizada por un TDA gusano
 verificarPosOcupadaXY([], [], _, Salida):- Salida is 0, !.
 verificarPosOcupadaXY([Car|_], [Cabeza|_], PosXY, Salida):- Car == PosXY, (esObstaculo(Cabeza); esSuelo(Cabeza)), Salida is 1, !.
 verificarPosOcupadaXY([Car|_], [Cabeza|_], PosXY, Salida):- Car == PosXY, esGusano(Cabeza), Salida is 2, !.
 verificarPosOcupadaXY([_|Cdr], [_|Cola], PosXY, Salida):- verificarPosOcupadaXY(Cdr, Cola, PosXY, Salida).
+%Predicado que retorna la posicion X e Y de un gusano cuando cae al moverse, si no es posible realizar el movimiento retorna una lista vacia
+%Entrada: -Lista con las posiciones X e Y de los TDAs
+%		  -Lista con los TDAs del escenario
+%		  -Lista con la posicion X e Y
+%		  -TDA del gusano a modificar
+%Salida: TDA gusano actualizado o lista vacia
 posXYCaidaGusano(_, _, [_, PosY], _, NewTDAGusano):- PosY < 1, NewTDAGusano = [], !.
 posXYCaidaGusano(ListPosXY, ListTDAs, [PosX, PosY], TDAGusano, NewTDAGusano):- PosY1 is PosY-1, verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX, PosY1], Salida), 
 																			Salida == 0, posXYCaidaGusano(ListPosXY, ListTDAs, [PosX, PosY1], TDAGusano, NewTDAGusano).
