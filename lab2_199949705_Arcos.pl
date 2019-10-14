@@ -77,6 +77,14 @@ suelo_getPosY(ListSuelo, PosY):- esSuelo(ListSuelo), obtenerPosicion(ListSuelo, 
 obtenerPosicion([Car|_], 0, Salida):- Salida is Car, !.
 obtenerPosicion([_|Cdr], Cant, Salida):- Cant1 is Cant - 1, obtenerPosicion(Cdr, Cant1, Salida), !.
 
+%----------------------------------------------------MODIFICADORES---------------------------------------------------------------
+%GUSANO
+gusano_setPosX(ListGusano, PosX, NewListGusano):- esGusano(ListGusano), number(PosX), PosX > 0, gusano_getId(ListGusano, Id), gusano_getIdGusano(ListGusano, Member), 
+												gusano_getPosY(ListGusano, PosY), NewListGusano = [Id, Member, PosX, PosY].
+gusano_setPosY(ListGusano, PosY, NewListGusano):- esGusano(ListGusano), number(PosY), PosY > 0, gusano_getId(ListGusano, Id), gusano_getIdGusano(ListGusano, Member), 
+												gusano_getPosX(ListGusano, PosX), NewListGusano = [Id, Member, PosX, PosY].
+
+
 %--------------------------------------------------------------------------------------------------------------------------------
 %---------------------------------R. Funcionales Obligatorio---------------------------------------------------------------------
 %--------------------------------------------------------------------------------------------------------------------------------
@@ -90,7 +98,7 @@ myRandom(Numero, Salida):- A is 1103515245, C is 12345, M is 2147483648, Salida 
 
 %Predicado que genera una lista con numeros random
 getListaRandom(Seed, Cuantos, Maximo, Lista):- numRandom(Seed, Maximo, NumRandom), NumRandom1 is NumRandom + 1,
-											myRandom(Seed, Seed1), write(NumRandom1), getListaRandomR(Seed1, Cuantos, Maximo, [NumRandom1], Lista).
+											myRandom(Seed, Seed1), getListaRandomR(Seed1, Cuantos, Maximo, [NumRandom1], Lista).
 
 %Predicado que genera una lista con numeros aleatorios no repetidos
 getListaRandomR(_, 1, _, Lista, ListaFinal):- ListaFinal = Lista.
@@ -117,6 +125,8 @@ getRad(Grados, Radianes):- Radianes is (Grados*pi)/180.
 %Predicado para obtener el valor del tiempo
 t(Tiempo):- Tiempo = 1.
 
+
+%-----------------------------------------------createScene----------------------------------------------------------------------
 %Predicado que permite consultar si es posible crear un escenario válido de tamaño NxM
 %Entrada: -Tamaño eje X
 %		  -Tamaño eje Y
@@ -166,7 +176,9 @@ createScene(20, 20, 8, _, _, Scene):- Scene = [20, 20, [1, 1], [2, 1], [3, 1], [
 
 %Predicado que permite consultar si un escenario cumple con los criterios para ser considerado valido.
 %Entrada: -Escenario del juego
-%Salida: True o False
+%Salida: True o false
+
+%-----------------------------------------------checkScene-----------------------------------------------------------------------
 checkScene(Scene):- is_list(Scene), obtenerPosicion(Scene, 0, N), N > 0, obtenerPosicion(Scene, 1, M), M > 0, obtenerTDAs(Scene, 1, ListTDAs), verificarTDAs(ListTDAs), 
 					obtenerPosXY(ListTDAs, ListPosXY), verificarPosDistintas(ListPosXY), !.
 %Predicado que crea una lista con las posiciones ocupadas por los TDAs
@@ -184,9 +196,9 @@ verificarTDAs([Car|Cdr]):- is_list(Car), (esGusano(Car); esDisparo(Car); esSuelo
 %Entrada: -Lista con los TDAs del escenario del juego
 %Salida: Lista de dos elementos (ej: [PosX,PosY])
 obtenerPosXY([],[]).
-obtenerPosXY([Car|Cdr], [Cabeza|Cola]):- ((esGusano(Car), gusano_getPosX(Car, PosX), gusano_getPosY(Car, PosY));(esDisparo(Car), disparo_getPosX(Car, PosX), disparo_getPosY(Car, PosY));
-										(esObstaculo(Car), obstaculo_getPosX(Car, PosX), obstaculo_getPosY(Car,PosY));(esSuelo(Car), suelo_getPosX(Car, PosX), suelo_getPosY(Car,PosY))),
-										obtenerPosXY(Cdr, Cola), Cabeza = [PosX,PosY].
+obtenerPosXY([Car|Cdr], [Cabeza|Cola]):- ((esGusano(Car), gusano_getPosX(Car, PosX), gusano_getPosY(Car, PosY));(esDisparo(Car), disparo_getPosX(Car, PosX), 
+										disparo_getPosY(Car, PosY)); (esObstaculo(Car), obstaculo_getPosX(Car, PosX), obstaculo_getPosY(Car,PosY));(esSuelo(Car), 
+										suelo_getPosX(Car, PosX), suelo_getPosY(Car,PosY))), obtenerPosXY(Cdr, Cola), Cabeza = [PosX,PosY].
 %Predicado que verifica si algun elemento de la lista con las posiciones X e Y se repite
 %Entrada: -Lista con las posiciones X e Y de los TDAs
 %Salida: True o false
@@ -203,3 +215,82 @@ compararListas(PosXY, [Car|Cdr]):- not(posXYIguales(PosXY, Car)), compararListas
 %		  -Segunda Lista con la posicion X e Y de un TDA
 %Salida: True o false
 posXYIguales([PosX,PosY], [PosX, PosY]).
+
+%-----------------------------------------------moveMember-----------------------------------------------------------------------
+moveMember(SceneIn, _, MoveDir, _, SceneOut):- checkScene(SceneIn), MoveDir == 0, SceneOut = SceneIn.
+moveMember(SceneIn, Member, MoveDir, _, SceneOut):- checkScene(SceneIn), obtenerPosicion(SceneIn, 0, N), obtenerPosicion(SceneIn, 1, M), obtenerTDAs(SceneIn, 1, ListTDAs), 
+													buscarGusano(ListTDAs, 1, Member, TDAGusano), MoveDir > 0, obtenerPosXY(ListTDAs, ListPosXY), gusano_getId(TDAGusano, Id),
+													gusano_getIdGusano(TDAGusano, Member), moverJugadorDer(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir, TDAGusano, NewListTDAs),
+													SceneOut = [N, M|NewListTDAs].
+
+moveMember(SceneIn, Member, MoveDir, _, SceneOut):- checkScene(SceneIn), obtenerPosicion(SceneIn, 0, N), obtenerPosicion(SceneIn, 1, M), obtenerTDAs(SceneIn, 1, ListTDAs), 
+													buscarGusano(ListTDAs, 1, Member, TDAGusano), MoveDir < 0, obtenerPosXY(ListTDAs, ListPosXY), gusano_getId(TDAGusano, Id),
+													gusano_getIdGusano(TDAGusano, Member), moverJugadorIzq(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir, TDAGusano, NewListTDAs),
+													SceneOut = [N, M|NewListTDAs].
+
+buscarGusano([Car|_], Id, Member, TDAGusano):- esGusano(Car), gusano_getId(Car, Id), gusano_getIdGusano(Car, Member), TDAGusano = Car.
+buscarGusano([_|Cdr], Id, Member, TDAGusano):- buscarGusano(Cdr, Id, Member, TDAGusano), !.
+
+moverJugadorDer(N, M, Id, Member, ListTDAs, _, _, TDAGusano, NewListTDAs):- (TDAGusano == []; (gusano_getPosX(TDAGusano, PosX), gusano_getPosY(TDAGusano, PosY),(PosX > M;PosX < 1;
+																			 PosY > N; PosY < 1))), eliminarGusano(ListTDAs, Id, Member, NewListTDAs), !.
+moverJugadorDer(_, _, _, _, ListTDAs, _, MoveDir, TDAGusano, NewListTDAs):- MoveDir == 0, modificarPosXYGusano(ListTDAs, TDAGusano, NewListTDAs), !.
+moverJugadorDer(N, M, Id, Member, ListTDAs, ListPosXY, _, TDAGusano, NewListTDAs):- gusano_getPosX(TDAGusano, PosX), PosX1 is PosX+1, gusano_getPosY(TDAGusano, PosY),
+																			verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY], Salida), (Salida == 1; Salida == 2),
+																			moverJugadorDer(N, M, Id, Member, ListTDAs, ListPosXY, 0, TDAGusano, NewListTDAs).
+moverJugadorDer(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir, TDAGusano, NewListTDAs):- gusano_getPosX(TDAGusano, PosX), PosX1 is PosX+1, gusano_getPosY(TDAGusano, PosY), 
+																			PosY1 is PosY-1, verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY], Salida), Salida == 0,
+																			verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1], Salida1), Salida1 == 1, 
+																			gusano_setPosX(TDAGusano, PosX1, TDAGusano1), MoveDir1 is MoveDir-1,
+																			moverJugadorDer(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir1, TDAGusano1, NewListTDAs).
+moverJugadorDer(N, M, Id, Member, ListTDAs, ListPosXY, _, TDAGusano, NewListTDAs):- gusano_getPosX(TDAGusano, PosX), PosX1 is PosX+1, gusano_getPosY(TDAGusano, PosY), 
+																			PosY1 is PosY-1, verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY], Salida), Salida == 0,
+																			verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1], Salida1), Salida1 == 2, 
+																			moverJugadorDer(N, M, Id, Member, ListTDAs, ListPosXY, 0, TDAGusano, NewListTDAs).
+moverJugadorDer(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir, TDAGusano, NewListTDAs):- gusano_getPosX(TDAGusano, PosX), PosX1 is PosX+1, gusano_getPosY(TDAGusano, PosY),
+																			PosY1 is PosY-1, verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY], Salida), Salida == 0,
+																			verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1], Salida1), Salida1 == 0,
+																			posXYCaidaGusano(ListPosXY, ListTDAs, [PosX1, PosY1], TDAGusano, TDAGusano1), MoveDir1 is MoveDir-1,
+																			moverJugadorDer(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir1, TDAGusano1, NewListTDAs).
+
+moverJugadorIzq(N, M, Id, Member, ListTDAs, _, _, TDAGusano, NewListTDAs):- (TDAGusano == []; (gusano_getPosX(TDAGusano, PosX), gusano_getPosY(TDAGusano, PosY),(PosX > M;PosX < 1;
+																			 PosY > N; PosY < 1))), eliminarGusano(ListTDAs, Id, Member, NewListTDAs), !.
+moverJugadorIzq(_, _, _, _, ListTDAs, _, MoveDir, TDAGusano, NewListTDAs):- MoveDir == 0, modificarPosXYGusano(ListTDAs, TDAGusano, NewListTDAs), !.
+moverJugadorIzq(N, M, Id, Member, ListTDAs, ListPosXY, _, TDAGusano, NewListTDAs):- gusano_getPosX(TDAGusano, PosX), PosX1 is PosX-1, gusano_getPosY(TDAGusano, PosY),
+																			verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY], Salida), (Salida == 1; Salida == 2),
+																			moverJugadorIzq(N, M, Id, Member, ListTDAs, ListPosXY, 0, TDAGusano, NewListTDAs).
+moverJugadorIzq(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir, TDAGusano, NewListTDAs):- gusano_getPosX(TDAGusano, PosX), PosX1 is PosX-1, gusano_getPosY(TDAGusano, PosY), 
+																			PosY1 is PosY-1, verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY], Salida), Salida == 0,
+																			verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1], Salida1), Salida1 == 1, 
+																			gusano_setPosX(TDAGusano, PosX1, TDAGusano1), MoveDir1 is MoveDir+1,
+																			moverJugadorIzq(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir1, TDAGusano1, NewListTDAs).
+moverJugadorIzq(N, M, Id, Member, ListTDAs, ListPosXY, _, TDAGusano, NewListTDAs):- gusano_getPosX(TDAGusano, PosX), PosX1 is PosX-1, gusano_getPosY(TDAGusano, PosY), 
+																			PosY1 is PosY-1, verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY], Salida), Salida == 0,
+																			verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1], Salida1), Salida1 == 2, 
+																			moverJugadorIzq(N, M, Id, Member, ListTDAs, ListPosXY, 0, TDAGusano, NewListTDAs).
+moverJugadorIzq(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir, TDAGusano, NewListTDAs):- gusano_getPosX(TDAGusano, PosX), PosX1 is PosX-1, gusano_getPosY(TDAGusano, PosY),
+																			PosY1 is PosY-1, verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY], Salida), Salida == 0,
+																			verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1], Salida1), Salida1 == 0,
+																			posXYCaidaGusano(ListPosXY, ListTDAs, [PosX1, PosY1], TDAGusano, TDAGusano1), MoveDir1 is MoveDir+1,
+																			moverJugadorIzq(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir1, TDAGusano1, NewListTDAs).
+
+eliminarGusano([Car|Cdr], Id, Member, Cdr):- esGusano(Car), gusano_getId(Car, Id), gusano_getIdGusano(Car, Member).
+eliminarGusano([Car|Cdr], Id, Member, [Car|Cola]):- eliminarGusano(Cdr, Id, Member, Cola), !.
+
+modificarPosXYGusano(ListTDAs, TDAGusano, NewListTDAs):- gusano_getPosX(TDAGusano, PosX), gusano_getPosY(TDAGusano, PosY), gusano_getId(TDAGusano, Id), 
+														gusano_getIdGusano(TDAGusano, Member), modificarGusano(ListTDAs, PosX, PosY, Id, Member, NewListTDAs), !.
+
+modificarGusano([Car|Cdr], PosX, PosY, Id, Member, [NewTDAGusano|Cdr]):- esGusano(Car), gusano_getId(Car, Id), gusano_getIdGusano(Car, Member), 
+																		gusano_setPosX(Car, PosX, TDAGusano),gusano_setPosY(TDAGusano, PosY, NewTDAGusano), !.
+modificarGusano([Car|Cdr], PosX, Pos, Id, Member, [Car|Cola]):- modificarGusano(Cdr, PosX, Pos, Id, Member, Cola).
+
+verificarPosOcupadaXY([], [], _, Salida):- Salida is 0, !.
+verificarPosOcupadaXY([Car|_], [Cabeza|_], PosXY, Salida):- Car == PosXY, (esObstaculo(Cabeza); esSuelo(Cabeza)), Salida is 1, !.
+verificarPosOcupadaXY([Car|_], [Cabeza|_], PosXY, Salida):- Car == PosXY, esGusano(Cabeza), Salida is 2, !.
+verificarPosOcupadaXY([_|Cdr], [_|Cola], PosXY, Salida):- verificarPosOcupadaXY(Cdr, Cola, PosXY, Salida).
+posXYCaidaGusano(_, _, [_, PosY], _, NewTDAGusano):- PosY < 1, NewTDAGusano = [], !.
+posXYCaidaGusano(ListPosXY, ListTDAs, [PosX, PosY], TDAGusano, NewTDAGusano):- PosY1 is PosY-1, verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX, PosY1], Salida), 
+																			Salida == 0, posXYCaidaGusano(ListPosXY, ListTDAs, [PosX, PosY1], TDAGusano, NewTDAGusano).
+posXYCaidaGusano(ListPosXY, ListTDAs, [PosX, PosY], TDAGusano, NewTDAGusano):- PosY1 is PosY-1, verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX, PosY1], Salida), 
+																			Salida == 1, gusano_setPosX(TDAGusano, PosX,TDAGusano1),gusano_setPosY(TDAGusano1,PosY,NewTDAGusano),!.
+posXYCaidaGusano(ListPosXY, ListTDAs, [PosX, PosY], TDAGusano, NewTDAGusano):- PosY1 is PosY-1, verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX, PosY1], Salida), 
+																			Salida == 2, NewTDAGusano = TDAGusano, !.
