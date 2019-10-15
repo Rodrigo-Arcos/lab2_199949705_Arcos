@@ -125,7 +125,8 @@ getRad(Grados, Radianes):- Radianes is (Grados*pi)/180.
 %Predicado para obtener el valor del tiempo
 t(Tiempo):- Tiempo = 1.
 
-
+%Predicado de la velocidad de los diparos
+velocidad(Speed):- Speed is 1.
 %-----------------------------------------------createScene----------------------------------------------------------------------
 %Predicado que permite consultar si es posible crear un escenario válido de tamaño NxM
 %Entrada: -Tamaño eje X
@@ -218,7 +219,7 @@ posXYIguales([PosX,PosY], [PosX, PosY]).
 
 %-----------------------------------------------moveMember-----------------------------------------------------------------------
 %Predicado que permite consultar si es posible mover un personaje
-%Entrada: -Escenaro del juego
+%Entrada: -Escenario del juego
 %		  -Personaje del equipo a mover
 %		  -Direccion del movimiento
 %		  -Parametro para generar valores pseudoaleatorios
@@ -233,7 +234,7 @@ moveMember(SceneIn, Member, MoveDir, _, SceneOut):- checkScene(SceneIn), obtener
 													buscarGusano(ListTDAs, 1, Member, TDAGusano), MoveDir < 0, obtenerPosXY(ListTDAs, ListPosXY), gusano_getId(TDAGusano, Id),
 													gusano_getIdGusano(TDAGusano, Member), moverJugadorIzq(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir, TDAGusano, NewListTDAs),
 													SceneOut = [N, M|NewListTDAs].
-%Predicado que busca en la lista TDAs un TDA gusano
+%Predicado que busca en la lista TDAs el TDA del gusano Member
 %Entrada: -Lista con los TDAs del escenario
 %		  -Equipo del gusano a mover
 %		  -Personaje del equipo a mover
@@ -345,3 +346,60 @@ posXYCaidaGusano(ListPosXY, ListTDAs, [PosX, PosY], TDAGusano, NewTDAGusano):- P
 																			Salida == 1, gusano_setPosX(TDAGusano, PosX,TDAGusano1),gusano_setPosY(TDAGusano1,PosY,NewTDAGusano),!.
 posXYCaidaGusano(ListPosXY, ListTDAs, [PosX, PosY], TDAGusano, NewTDAGusano):- PosY1 is PosY-1, verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX, PosY1], Salida), 
 																			Salida == 2, NewTDAGusano = TDAGusano, !.
+%Predicado que realizar un disparo ejecutado por Member
+%Entrada: -Escenario del juego
+%		  -Personaje del equipo a mover
+%		  -Tipo del disparo
+%		  -Angulo del disparo
+%		  -Parametro para generar valores pseudoaleatorios
+%Salida: Nuevo escenario del juego
+shoot(SceneIn, Member, ShootType, Angle, _, SceneOut):- ShootType == disparoMRU, checkScene(SceneIn), obtenerPosicion(SceneIn, 0, N), obtenerPosicion(SceneIn, 1, M), obtenerTDAs(SceneIn, 1, ListTDAs), 
+														obtenerPosXY(ListTDAs, ListPosXY), buscarGusano(ListTDAs, 1, Member, TDAGusano), gusano_getPosX(TDAGusano, PosX), gusano_getPosY(TDAGusano, PosY), 
+														velocidad(Speed), t(Tiempo), getRad(Angle, NewAngle), PosX1 is ceil(PosX + (Speed * (cos(NewAngle)) * Tiempo)), 
+														PosY1 is ceil(PosY + (Speed * (sin(NewAngle)) * Tiempo)), verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1], Salida), Salida == 0, 
+														disparo(2, Angle, Speed, PosX1, PosY1, TDADisparo), agregarTDAaListTDAs(ListTDAs, TDADisparo, ListTDAs1), !, SceneOut = [N, M|ListTDAs1].
+
+shoot(SceneIn, Member, ShootType, Angle, _, SceneOut):- ShootType == disparoMRU, checkScene(SceneIn), obtenerPosicion(SceneIn, 0, N), obtenerPosicion(SceneIn, 1, M), obtenerTDAs(SceneIn, 1, ListTDAs), 
+														obtenerPosXY(ListTDAs, ListPosXY), buscarGusano(ListTDAs, 1, Member, TDAGusano), gusano_getPosX(TDAGusano, PosX), gusano_getPosY(TDAGusano, PosY), 
+														velocidad(Speed), t(Tiempo), getRad(Angle, NewAngle), PosX1 is ceil(PosX + (Speed * (cos(NewAngle)) * Tiempo)), 
+														PosY1 is ceil(PosY + (Speed * (sin(NewAngle)) * Tiempo)), verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1], Salida), 
+														(Salida == 1; Salida == 2), eliminarTDAListTDAs(ListPosXY, ListTDAs, [PosX1,PosY1], ListTDAs1), 
+														eliminarTDAListPosXY(ListPosXY, [PosX1,PosY1], ListPosXY1), verificarGusanoEnAire(ListTDAs1, ListTDAs1, ListPosXY1, ListTDAs2), !, 
+														SceneOut = [N, M|ListTDAs2].
+%Predicado que agrega al final de la lista que contiene los TDAs del escenario un TDA
+%Entrada: -Lista con los TDAs del escenario
+%		  -TDA a agregar
+%Salida: Lista con los TDAs del escenario actualizada
+agregarTDAaListTDAs([], TDADisparo, [TDADisparo]):- !. 
+agregarTDAaListTDAs([Car|Cdr], TDADisparo, [Car|Cola]):- agregarTDAaListTDAs(Cdr, TDADisparo, Cola), !.
+
+%Predicado que elimina un TDA de la lista que contiene los TDAs del escenario
+%Entrada: -Lista con las posiciones X e Y de los TDAs
+%		  -Lista con los TDAs del escenario
+%		  -Lista con la posicion X e Y
+%Salida: Lista con los TDAs del escenario actualizada
+eliminarTDAListTDAs([Car|_], [_|Cdr], PosXY, Cdr):- Car == PosXY, !.
+eliminarTDAListTDAs([_|Cdr], [Cabeza|Cola], PosXY, [Cabeza|Cdr1]):- eliminarTDAListTDAs(Cdr, Cola, PosXY, Cdr1).
+
+%Predicado que elimina una Posicion X e Y de la lista que contiene las posiciones X e Y de los TDAs
+%Entrada: -Lista con las posiciones X e Y de los TDAs
+%		  -Lista con la posicion X e Y
+%Salida: Lista con las posiciones de los TDAs actualizada
+eliminarTDAListPosXY([Car|Cdr], PosXY, Cdr):- Car == PosXY, !.
+eliminarTDAListPosXY([Car|Cdr], PosXY, [Car|Cdr1]):- eliminarTDAListPosXY(Cdr, PosXY, Cdr1).
+
+%Predicado que verifica que los gusanos del escenario esten sobre un obstaculo o suelo, en caso de que el gusano cae sobre otro gusano es eliminado, en cambio, si cae sobre el TDA suelo o obstaculo se
+%modifica la posicion del gusano.
+%Entrada: -Lista con las posiciones X e Y de los TDAs
+%		  -Lista con los TDAs del escenario
+%		  -Lista con la posicion X e Y
+%Salida: Lista con los TDAs del escenario actualizada
+verificarGusanoEnAire(_, [], _, []):- !.
+verificarGusanoEnAire(ListTDAs, [Car|Cdr], ListPosXY, Cdr):- esGusano(Car), gusano_getPosX(Car, PosX), gusano_getPosY(Car, PosY), PosY1 is PosY-1, verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX, PosY1], 
+															Salida), Salida == 0, posXYCaidaGusano(ListPosXY, ListTDAs, [PosX,PosY1], Car, TDAGusano), (TDAGusano == Car; TDAGusano == []), !.
+
+verificarGusanoEnAire(ListTDAs, [Car|Cdr], ListPosXY, [TDAGusano|Cdr]):- esGusano(Car), gusano_getPosX(Car, PosX), gusano_getPosY(Car, PosY), PosY1 is PosY-1, 
+																		verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX, PosY1], Salida), Salida == 0, 
+																		posXYCaidaGusano(ListPosXY, ListTDAs, [PosX,PosY1], Car, TDAGusano), !.
+
+verificarGusanoEnAire(ListTDAs, [Car|Cdr], ListPosXY, [Car|Cdr1]):- verificarGusanoEnAire(ListTDAs, Cdr, ListPosXY, Cdr1), !.
