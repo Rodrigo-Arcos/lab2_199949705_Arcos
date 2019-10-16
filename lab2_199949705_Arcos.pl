@@ -230,12 +230,18 @@ moveMember(SceneIn, _, MoveDir, _, SceneOut):- checkScene(SceneIn), MoveDir == 0
 moveMember(SceneIn, Member, MoveDir, _, SceneOut):- checkScene(SceneIn), obtenerPosicion(SceneIn, 0, N), obtenerPosicion(SceneIn, 1, M), obtenerTDAs(SceneIn, 1, ListTDAs), 
 													buscarGusano(ListTDAs, 1, Member, TDAGusano), MoveDir > 0, obtenerPosXY(ListTDAs, ListPosXY), gusano_getId(TDAGusano, Id),
 													gusano_getIdGusano(TDAGusano, Member), moverJugadorDer(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir, TDAGusano, NewListTDAs),
-													SceneOut = [N, M|NewListTDAs].
+													((contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug > 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), GusanosEne > 0, 
+													SceneOut = [N, M|NewListTDAs]); (contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug == 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), 
+													GusanosEne > 0, SceneOut = "DEFEAT"); (contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug > 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), 
+													GusanosEne == 0, SceneOut = "VICTORY")), !.
 
 moveMember(SceneIn, Member, MoveDir, _, SceneOut):- checkScene(SceneIn), obtenerPosicion(SceneIn, 0, N), obtenerPosicion(SceneIn, 1, M), obtenerTDAs(SceneIn, 1, ListTDAs), 
 													buscarGusano(ListTDAs, 1, Member, TDAGusano), MoveDir < 0, obtenerPosXY(ListTDAs, ListPosXY), gusano_getId(TDAGusano, Id),
 													gusano_getIdGusano(TDAGusano, Member), moverJugadorIzq(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir, TDAGusano, NewListTDAs),
-													SceneOut = [N, M|NewListTDAs].
+													((contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug > 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), GusanosEne > 0, 
+													SceneOut = [N, M|NewListTDAs]); (contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug == 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), 
+													GusanosEne > 0, SceneOut = "DEFEAT"); (contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug > 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), 
+													GusanosEne == 0, SceneOut = "VICTORY")), !.
 %Predicado que busca en la lista TDAs el TDA del gusano Member
 %Entrada: -Lista con los TDAs del escenario
 %		  -Equipo del gusano a mover
@@ -348,6 +354,15 @@ posXYCaidaGusano(ListPosXY, ListTDAs, [PosX, PosY], TDAGusano, NewTDAGusano):- P
 																			Salida == 1, gusano_setPosX(TDAGusano, PosX,TDAGusano1),gusano_setPosY(TDAGusano1,PosY,NewTDAGusano),!.
 posXYCaidaGusano(ListPosXY, ListTDAs, [PosX, PosY], TDAGusano, NewTDAGusano):- PosY1 is PosY-1, verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX, PosY1], Salida), 
 																			Salida == 2, NewTDAGusano = TDAGusano, !.
+%Predicado que cuenta la cantidad de gusanos de un equipo
+%Entrada: -Lista con los TDAs del escenario
+%		  -Equipo de los gusanos a contar
+%		  -Cantidad de gusanos que se actualiza en la recursion
+%Salida: Cantidad de gusanos de un equipo
+contarGusanos([], _, Cant, Cant).
+contarGusanos([Car|Cdr], Id, Cant, Total):- esGusano(Car), gusano_getId(Car, Id), Cant1 is Cant+1, contarGusanos(Cdr, Id, Cant1, Total), !.
+contarGusanos([_|Cdr], Id, Cant, Total):- contarGusanos(Cdr, Id, Cant, Total), !.
+
 %Predicado que realizar un disparo ejecutado por Member
 %Entrada: -Escenario del juego
 %		  -Personaje del equipo a mover
@@ -366,8 +381,11 @@ shoot(SceneIn, Member, ShootType, Angle, _, SceneOut):- ShootType == disparoMRU,
 														velocidad(Speed), t(Tiempo), getRad(Angle, NewAngle), PosX1 is ceil(PosX + (Speed * (cos(NewAngle)) * Tiempo)), 
 														PosY1 is ceil(PosY + (Speed * (sin(NewAngle)) * Tiempo)), verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1], Salida),
 														(Salida == 1; Salida == 2), eliminarTDAListTDAs(ListPosXY, ListTDAs, [PosX1,PosY1], ListTDAs1), 
-														eliminarTDAListPosXY(ListPosXY, [PosX1,PosY1], ListPosXY1), verificarGusanoEnAire(ListTDAs1, ListTDAs1, ListPosXY1, ListTDAs2), !, 
-														SceneOut = [N, M|ListTDAs2].
+														eliminarTDAListPosXY(ListPosXY, [PosX1,PosY1], ListPosXY1), verificarGusanoEnAire(ListTDAs1, ListTDAs1, ListPosXY1, ListTDAs2), 
+														((contarGusanos(ListTDAs2, 1, 0, GusanosJug), GusanosJug > 0, contarGusanos(ListTDAs2, 0, 0, GusanosEne), GusanosEne > 0, 
+														SceneOut = [N, M|ListTDAs2]); (contarGusanos(ListTDAs2, 1, 0, GusanosJug), GusanosJug == 0, contarGusanos(ListTDAs2, 0, 0, GusanosEne), 
+														GusanosEne > 0, SceneOut = "DEFEAT"); (contarGusanos(ListTDAs2, 1, 0, GusanosJug), GusanosJug > 0, contarGusanos(ListTDAs2, 0, 0, GusanosEne), 
+														GusanosEne == 0, SceneOut = "VICTORY")), !.
 %Predicado que agrega al final de la lista que contiene los TDAs del escenario un TDA
 %Entrada: -Lista con los TDAs del escenario
 %		  -TDA a agregar
@@ -411,7 +429,11 @@ verificarGusanoEnAire(ListTDAs, [Car|Cdr], ListPosXY, [Car|Cdr1]):- verificarGus
 %		  -Parametro para generar valores pseudoaleatorios
 %Salida: Escenario del juego actualizado
 updateScene(SceneIn, _, SceneOut):- checkScene(SceneIn), obtenerPosicion(SceneIn, 0, N), obtenerPosicion(SceneIn, 1, M), obtenerTDAs(SceneIn, 1, ListTDAs), obtenerPosXY(ListTDAs, ListPosXY),
-									actualizarDisparos(ListTDAs, ListTDAs, ListPosXY, NewListTDAs), SceneOut = [N, M|NewListTDAs].
+									actualizarDisparos(ListTDAs, ListTDAs, ListPosXY, NewListTDAs), 
+									((contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug > 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), GusanosEne > 0, 
+									SceneOut = [N, M|NewListTDAs]); (contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug == 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), 
+									GusanosEne > 0, SceneOut = "DEFEAT"); (contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug > 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), 
+									GusanosEne == 0, SceneOut = "VICTORY")), !.
 
 %Predicado que retorna la lista con los TDAs del escenario actualizada en t+1
 %Entrada: -Lista con los TDAs del escenario
