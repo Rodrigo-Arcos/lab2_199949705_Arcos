@@ -441,3 +441,68 @@ actualizarDisparos([_|Cdr], ListTDAs, ListPosXY, NewListTDAs):- actualizarDispar
 %Salida: Lista con las posiciones de los TDAs actualizada
 agregarPosXYaListPosXY([], PosXY, [PosXY]):- !.
 agregarPosXYaListPosXY([Car|Cdr], PosXY, [Car|Cdr1]):- agregarPosXYaListPosXY(Cdr, PosXY, Cdr1).
+%Predicado que convierte un escenario a su representacion a string
+%Entrada: -Escenario del juego
+%Salida: Representacion del escenario del juego en string
+sceneToString(Scene, SceneStr):- checkScene(Scene), obtenerPosicion(Scene, 0, N), obtenerPosicion(Scene, 1, M), crearMatriz(N, M, MatrizDeCeros), obtenerTDAs(Scene, 1, ListTDAs),
+								ponerTDAsEnMatriz(N, M, ListTDAs, MatrizDeCeros, MatrizConTDAs), convertirMatrizAStr(MatrizConTDAs, "", SceneStr), !.
+
+%Predicado que crea una matriz de ceros N x M
+%Entrada: -Cantidad de filas de la matriz
+%		  -Cantidad de columnas de la matriz
+%Salida: Matriz de ceros N x M
+crearMatriz(0, _, []).
+crearMatriz(N, M, [Fila|Cola]):- N > 0, M > 0, crearMatrizFila(M, Fila), N1 is N-1, crearMatriz(N1, M, Cola), !.
+%Predicado que recorre las filas del espacio asignando ceros
+%Entrada: -Cantidad de columnas de la matriz
+%Salida: Fila de una matriz
+crearMatrizFila(M, [0|Cola]):- M > 0, M1 is M-1, crearMatrizFila(M1,Cola), !.
+crearMatrizFila(0, []).
+%Predicado que inserta en una matriz los TDAs del escenario del juego
+%Entrada: -Cantidad de filas de la matriz
+%		  -Cantidad de columnas de la matriz
+%		  -Lista con los TDAs del escenario
+%		  -Matriz que se actualiza en cada recursion
+%Salida: Matriz que contiene los TDAs del escenario
+ponerTDAsEnMatriz(_, _, [], Matriz, Matriz).
+ponerTDAsEnMatriz(N, M, [Car|Cdr], Matriz, MatrizConTDAs):- esGusano(Car), gusano_getPosX(Car, PosX), gusano_getPosY(Car, PosY), PosY1 is N-PosY, 
+															insertarTDAEnMatriz(PosX, PosY1, Car, Matriz, Matriz1), ponerTDAsEnMatriz(N, M, Cdr, Matriz1, MatrizConTDAs), !.
+ponerTDAsEnMatriz(N, M, [Car|Cdr], Matriz, MatrizConTDAs):- esObstaculo(Car), obstaculo_getPosX(Car, PosX), obstaculo_getPosY(Car, PosY), PosY1 is N-PosY, 
+															insertarTDAEnMatriz(PosX, PosY1, Car, Matriz, Matriz1), ponerTDAsEnMatriz(N, M, Cdr, Matriz1, MatrizConTDAs), !.
+ponerTDAsEnMatriz(N, M, [Car|Cdr], Matriz, MatrizConTDAs):- esSuelo(Car), suelo_getPosX(Car, PosX), suelo_getPosY(Car, PosY), PosY1 is N-PosY, 
+															insertarTDAEnMatriz(PosX, PosY1, Car, Matriz, Matriz1), ponerTDAsEnMatriz(N, M, Cdr, Matriz1, MatrizConTDAs), !.
+ponerTDAsEnMatriz(N, M, [Car|Cdr], Matriz, MatrizConTDAs):- esDisparo(Car), disparo_getPosX(Car, PosX), disparo_getPosY(Car, PosY), PosY1 is N-PosY, 
+															insertarTDAEnMatriz(PosX, PosY1, Car, Matriz, Matriz1), ponerTDAsEnMatriz(N, M, Cdr, Matriz1, MatrizConTDAs), !.
+ponerTDAsEnMatriz(N, M, [_|Cdr], Matriz, MatrizConTDAs):- ponerTDAsEnMatriz(N, M, Cdr, Matriz, MatrizConTDAs), !.
+%Predicado que inserta un TDA en una matriz
+%Entrada: -Posicion X del TDA a insertar
+%		  -Posicion Y del TDA a insertar
+%		  -TDA a insertar
+%		  -Matriz con los TDAs del escenario
+%Salida: Matriz actualizada (con un TDA insertado)
+insertarTDAEnMatriz(PosX, PosY, TDA, [Car|Cdr], [Cabeza|Cdr]):- PosY == 0, insertarTDAEnMatrizFila(PosX, TDA, Car, Cabeza), !.
+insertarTDAEnMatriz(PosX, PosY, TDA, [Car|Cdr], [Car|Cola]):- PosY1 is PosY-1, insertarTDAEnMatriz(PosX, PosY1, TDA, Cdr, Cola), !.
+%Predicado que inserta un TDA en una fila de una matriz
+%Entrada: -Posicion X del TDA a insertar
+%		  -TDA a insertar
+%		  -Fila de la matriz que se le insertara el TDA
+%Salida: Fila de una matriz actualizada (con un TDA insertado)
+insertarTDAEnMatrizFila(PosX, TDA, [_|Cdr], [Cabeza|Cdr]):- PosX == 1, Cabeza = TDA, !.
+insertarTDAEnMatrizFila(PosX, TDA, [Car|Cdr], [Car|Cola]):- PosX1 is PosX-1, insertarTDAEnMatrizFila(PosX1, TDA, Cdr, Cola), !.
+%Predicado que convierte una matriz a su representacion a string
+%Entrada: -Matriz que contiene los TDAs del escenario
+%		  -String de la fila de la representacion el escenario del juego que se actualiza en cada recursion
+%Salida: String de la representacion del escenario
+convertirMatrizAStr([], Str, Str).
+convertirMatrizAStr([Fila|Cdr], Str, SceneStr):- convertirMatrizAStrFila(Fila, Str, Str1), convertirMatrizAStr(Cdr, Str1, SceneStr), !.
+%Predicado que convierte un fila de una matriz a su representacion a string
+%Entrada: -Fila de la matriz que contiene al escenario
+%		  -String de la representacion el escenario del juego que se actualiza en cada recursion
+%Salida: String de la fila de la representacion del escenario
+convertirMatrizAStrFila([], Str, NewStr):- string_concat(Str, "\n", NewStr), !.
+convertirMatrizAStrFila([Car|Cdr], Str, NewStr):- Car == 0, string_concat(Str, "  ", Str1), convertirMatrizAStrFila(Cdr, Str1, NewStr), !.
+convertirMatrizAStrFila([Car|Cdr], Str, NewStr):- esGusano(Car), gusano_getId(Car, Id), Id == 0, string_concat(Str, "E ", Str1), convertirMatrizAStrFila(Cdr, Str1, NewStr), !.
+convertirMatrizAStrFila([Car|Cdr], Str, NewStr):- esGusano(Car), gusano_getId(Car, Id), Id == 1, string_concat(Str, "A ", Str1), convertirMatrizAStrFila(Cdr, Str1, NewStr), !.
+convertirMatrizAStrFila([Car|Cdr], Str, NewStr):- esDisparo(Car), string_concat(Str, "o ", Str1), convertirMatrizAStrFila(Cdr, Str1, NewStr), !.
+convertirMatrizAStrFila([Car|Cdr], Str, NewStr):- esObstaculo(Car), string_concat(Str, "# ", Str1), convertirMatrizAStrFila(Cdr, Str1, NewStr), !.
+convertirMatrizAStrFila([Car|Cdr], Str, NewStr):- esSuelo(Car), string_concat(Str, "_ ", Str1), convertirMatrizAStrFila(Cdr, Str1, NewStr), !.
