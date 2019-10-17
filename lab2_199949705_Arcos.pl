@@ -708,3 +708,34 @@ shootEnemigo(SceneIn, Member, ShootType, Angle, _, SceneOut):- ShootType == disp
 														SceneOut = [N, M|ListTDAs2]); (contarGusanos(ListTDAs2, 1, 0, GusanosJug), GusanosJug == 0, contarGusanos(ListTDAs2, 0, 0, GusanosEne), 
 														GusanosEne > 0, SceneOut = "DEFEAT"); (contarGusanos(ListTDAs2, 1, 0, GusanosJug), GusanosJug > 0, contarGusanos(ListTDAs2, 0, 0, GusanosEne), 
 														GusanosEne == 0, SceneOut = "VICTORY")), !.
+
+%Ejemplos:
+%REQUIRIMIENTOS OBLIGATORIOS:
+%   createScene:	1.- createScene(5, 10, 4, 1, _, Scene).
+%				 	2.- createScene(10, 12, 6, 2, _, Scene).
+%				 	3.- createScene(20, 20, 8, 3, _, Scene).
+
+% 	checkScene:  	1.- createScene(5, 10, 4, 1, _, Scene), checkScene(Scene).
+%				 	2.- createScene(10, 12, 6, 2, _, Scene), checkScene(Scene).
+%				 	3.- createScene(20, 20, 8, 3, _, Scene), checkScene(Scene).
+
+%	moveMember:  	1.- createScene(5, 10, 4, 1, _, Scene), moveMember(Scene, 1, 3, _, SceneOut).
+%				 	2.- createScene(10, 12, 6, 2, _, Scene), moveMember(Scene, 2, -3, _, SceneOut).
+%				 	3.- createScene(20, 20, 8, 3, _, Scene), moveMember(Scene, 3, 5, _, SceneOut).
+
+%	shoot: 		 	1.- createScene(5, 10, 4, 1, _, Scene), shoot(Scene, 1, disparoMRU, 0, _, SceneOut).
+%				 	2.- createScene(10, 12, 6, 2, _, Scene), shoot(Scene, 2, disparoMRU, 270, _, SceneOut).
+%				 	3.- createScene(20, 20, 8, 3, _, Scene), shoot(Scene, 3, disparoMRU, 180, _, SceneOut).
+
+%	updateScene: 	1.- createScene(5, 10, 4, 1, _, Scene), shoot(Scene, 1, disparoMRU, 0, _, SceneOut), updateScene(SceneOut, _, SceneOut1).
+%				 	2.- createScene(10, 12, 6, 2, _, Scene), updateScene(Scene, _, SceneOut).
+%				 	3.- createScene(20, 20, 8, 3, _, Scene), shoot(Scene, 3, disparoMRU, 45, _, SceneOut), updateScene(SceneOut, _, SceneOut1).
+
+%	sceneToString: 	1.- createScene(5, 10, 4, 1, _, Scene), moveMember(Scene, 1, 3, _, SceneOut), sceneToString(SceneOut, SceneStr).
+%					2.- createScene(10, 12, 6, 2, _, Scene), shoot(Scene, 2, disparoMRU, 270, _, SceneOut), sceneToString(SceneOut, SceneStr).
+%					3.- createScene(20, 20, 8, 3, _, Scene), shoot(Scene, 3, disparoMRU, 45, _, SceneOut), updateScene(SceneOut, _, SceneOut1), sceneToString(SceneOut1, SceneStr).
+
+%REQUIRIMIENTOS EXTRAS: 
+%	play: 			1.- createScene(5, 10, 4, 1, _, Scene), play(Scene, 1, 3, disparoMRU, 0, 3213123, SceneOut).
+%					2.- createScene(10, 12, 6, 2, _, Scene), play(Scene, 2, -4, disparoMRU, 270, 5464865, SceneOut).
+%					3.- createScene(20, 20, 8, 3, _, Scene), play(Scene, 2, 5, disparoMRU, 30, 984561, SceneOut).
