@@ -321,18 +321,11 @@ moveMember(SceneIn, _, MoveDir, _, SceneOut):- checkScene(SceneIn), MoveDir == 0
 moveMember(SceneIn, Member, MoveDir, _, SceneOut):- checkScene(SceneIn), obtenerPosicion(SceneIn, 0, N), obtenerPosicion(SceneIn, 1, M), obtenerTDAs(SceneIn, 1, ListTDAs), 
 													buscarGusano(ListTDAs, 1, Member, TDAGusano), MoveDir > 0, obtenerPosXY(ListTDAs, ListPosXY), gusano_getId(TDAGusano, Id),
 													gusano_getIdGusano(TDAGusano, Member), moverJugadorDer(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir, TDAGusano, NewListTDAs),
-													((contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug > 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), GusanosEne > 0, 
-													SceneOut = [N, M|NewListTDAs]); (contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug == 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), 
-													GusanosEne > 0, SceneOut = "DEFEAT"); (contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug > 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), 
-													GusanosEne == 0, SceneOut = "VICTORY")), !.
-
+													SceneOut = [N, M|NewListTDAs], !.
 moveMember(SceneIn, Member, MoveDir, _, SceneOut):- checkScene(SceneIn), obtenerPosicion(SceneIn, 0, N), obtenerPosicion(SceneIn, 1, M), obtenerTDAs(SceneIn, 1, ListTDAs), 
 													buscarGusano(ListTDAs, 1, Member, TDAGusano), MoveDir < 0, obtenerPosXY(ListTDAs, ListPosXY), gusano_getId(TDAGusano, Id),
 													gusano_getIdGusano(TDAGusano, Member), moverJugadorIzq(N, M, Id, Member, ListTDAs, ListPosXY, MoveDir, TDAGusano, NewListTDAs),
-													((contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug > 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), GusanosEne > 0, 
-													SceneOut = [N, M|NewListTDAs]); (contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug == 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), 
-													GusanosEne > 0, SceneOut = "DEFEAT"); (contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug > 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), 
-													GusanosEne == 0, SceneOut = "VICTORY")), !.
+													SceneOut = [N, M|NewListTDAs], !.
 %Predicado que busca en la lista TDAs el TDA del gusano Member
 %Entrada: -Lista con los TDAs del escenario
 %		  -Equipo del gusano a mover
@@ -466,7 +459,14 @@ shoot(SceneIn, Member, ShootType, Angle, _, SceneOut):- ShootType == disparoMRU,
 														obtenerPosXY(ListTDAs, ListPosXY), buscarGusano(ListTDAs, 1, Member, TDAGusano), gusano_getPosX(TDAGusano, PosX), gusano_getPosY(TDAGusano, PosY), 
 														velocidad(Speed), t(Tiempo), getRad(Angle, NewAngle), PosX1 is ceil(PosX + (Speed * (cos(NewAngle)) * Tiempo)), 
 														PosY1 is ceil(PosY + (Speed * (sin(NewAngle)) * Tiempo)), verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1], Salida), Salida == 0, 
-														disparo(2, Angle, Speed, PosX1, PosY1, TDADisparo), agregarTDAaListTDAs(ListTDAs, TDADisparo, ListTDAs1), !, SceneOut = [N, M|ListTDAs1].
+														PosX1 > 0, PosX1 =< M, PosY1 > 0, PosY1 =< N, disparo(2, Angle, Speed, PosX1, PosY1, TDADisparo), 
+														agregarTDAaListTDAs(ListTDAs, TDADisparo, ListTDAs1), SceneOut = [N, M|ListTDAs1], !.
+
+shoot(SceneIn, Member, ShootType, Angle, _, SceneOut):- ShootType == disparoMRU, checkScene(SceneIn), obtenerPosicion(SceneIn, 0, N), obtenerPosicion(SceneIn, 1, M), obtenerTDAs(SceneIn, 1, ListTDAs), 
+														obtenerPosXY(ListTDAs, ListPosXY), buscarGusano(ListTDAs, 1, Member, TDAGusano), gusano_getPosX(TDAGusano, PosX), gusano_getPosY(TDAGusano, PosY), 
+														velocidad(Speed), t(Tiempo), getRad(Angle, NewAngle), PosX1 is ceil(PosX + (Speed * (cos(NewAngle)) * Tiempo)), 
+														PosY1 is ceil(PosY + (Speed * (sin(NewAngle)) * Tiempo)), verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1], Salida), Salida == 0, 
+														(PosX1 =< 0; PosX1 > M; PosY1 =< 0; PosY1 > N), SceneOut = [N, M|ListTDAs], !.
 
 shoot(SceneIn, Member, ShootType, Angle, _, SceneOut):- ShootType == disparoMRU, checkScene(SceneIn), obtenerPosicion(SceneIn, 0, N), obtenerPosicion(SceneIn, 1, M), obtenerTDAs(SceneIn, 1, ListTDAs), 
 														obtenerPosXY(ListTDAs, ListPosXY), buscarGusano(ListTDAs, 1, Member, TDAGusano), gusano_getPosX(TDAGusano, PosX), gusano_getPosY(TDAGusano, PosY), 
@@ -521,7 +521,7 @@ verificarGusanoEnAire(ListTDAs, [Car|Cdr], ListPosXY, [Car|Cdr1]):- verificarGus
 %		  -Parametro para generar valores pseudoaleatorios
 %Salida: Escenario del juego actualizado
 updateScene(SceneIn, _, SceneOut):- checkScene(SceneIn), obtenerPosicion(SceneIn, 0, N), obtenerPosicion(SceneIn, 1, M), obtenerTDAs(SceneIn, 1, ListTDAs), obtenerPosXY(ListTDAs, ListPosXY),
-									actualizarDisparos(ListTDAs, ListTDAs, ListPosXY, NewListTDAs), 
+									actualizarDisparos(N, M, ListTDAs, ListTDAs, ListPosXY, NewListTDAs), 
 									((contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug > 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), GusanosEne > 0, 
 									SceneOut = [N, M|NewListTDAs]); (contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug == 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), 
 									GusanosEne > 0, SceneOut = "DEFEAT"); (contarGusanos(NewListTDAs, 1, 0, GusanosJug), GusanosJug > 0, contarGusanos(NewListTDAs, 0, 0, GusanosEne), 
@@ -532,22 +532,28 @@ updateScene(SceneIn, _, SceneOut):- checkScene(SceneIn), obtenerPosicion(SceneIn
 %		  -Lista con los TDAs del escenario
 %		  -Lista con las posiciones X e Y de los TDAs
 %Salida: Lista con los TDAs del escenario actualizada
-actualizarDisparos([],ListTDAs, ListPosXY, NewListTDAs):- verificarGusanoEnAire(ListTDAs, ListTDAs, ListPosXY, NewListTDAs), !.
-actualizarDisparos([Car|Cdr], ListTDAs, ListPosXY, NewListTDAs):- esDisparo(Car), disparo_getPosX(Car, PosX), disparo_getPosY(Car, PosY), disparo_getAngulo(Car, Angle), disparo_getVelo(Car, Speed),t(Tiempo),
+actualizarDisparos(_, _, [],ListTDAs, ListPosXY, NewListTDAs):- verificarGusanoEnAire(ListTDAs, ListTDAs, ListPosXY, NewListTDAs), !.
+actualizarDisparos(N, M, [Car|Cdr], ListTDAs, ListPosXY, NewListTDAs):- esDisparo(Car), disparo_getPosX(Car, PosX), disparo_getPosY(Car, PosY), disparo_getAngulo(Car, Angle), disparo_getVelo(Car, Speed),t(Tiempo),
 																getRad(Angle, NewAngle), PosX1 is ceil(PosX + (Speed * (cos(NewAngle)) * Tiempo)), PosY1 is ceil(PosY + (Speed * (sin(NewAngle)) * Tiempo)),
 																verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1],Salida), Salida == 0,eliminarTDAListTDAs(ListPosXY, ListTDAs,[PosX,PosY], ListTDAs1),
 																eliminarTDAListPosXY(ListPosXY, [PosX,PosY], ListPosXY1), disparo(2, Angle, Speed, PosX1, PosY1, TDADisparo),
+																PosX1 > 0, PosX1 =< M, PosY1 > 0, PosY1 =< N,
 																agregarTDAaListTDAs(ListTDAs1, TDADisparo, ListTDAs2), agregarPosXYaListPosXY(ListPosXY1, [PosX1,PosY1], ListPosXY2), 
-																actualizarDisparos(Cdr, ListTDAs2, ListPosXY2, NewListTDAs), !.
+																actualizarDisparos(N, M, Cdr, ListTDAs2, ListPosXY2, NewListTDAs), !.
+actualizarDisparos(N, M, [Car|Cdr], ListTDAs, ListPosXY, NewListTDAs):- esDisparo(Car), disparo_getPosX(Car, PosX), disparo_getPosY(Car, PosY), disparo_getAngulo(Car, Angle), disparo_getVelo(Car, Speed),t(Tiempo),
+																getRad(Angle, NewAngle), PosX1 is ceil(PosX + (Speed * (cos(NewAngle)) * Tiempo)), PosY1 is ceil(PosY + (Speed * (sin(NewAngle)) * Tiempo)),
+																verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1],Salida), Salida == 0,eliminarTDAListTDAs(ListPosXY, ListTDAs,[PosX,PosY], ListTDAs1),
+																eliminarTDAListPosXY(ListPosXY, [PosX,PosY], ListPosXY1), (PosX1 =< 0; PosX1 > M; PosY1 =< 0; PosY1 > N),
+																actualizarDisparos(N, M, Cdr, ListTDAs1, ListPosXY1, NewListTDAs), !.
 
-actualizarDisparos([Car|Cdr], ListTDAs, ListPosXY, NewListTDAs):- esDisparo(Car), disparo_getPosX(Car, PosX), disparo_getPosY(Car, PosY), disparo_getAngulo(Car, Angle), disparo_getVelo(Car, Speed),t(Tiempo),
+actualizarDisparos(N, M, [Car|Cdr], ListTDAs, ListPosXY, NewListTDAs):- esDisparo(Car), disparo_getPosX(Car, PosX), disparo_getPosY(Car, PosY), disparo_getAngulo(Car, Angle), disparo_getVelo(Car, Speed),t(Tiempo),
 																getRad(Angle, NewAngle), PosX1 is ceil(PosX + (Speed * (cos(NewAngle)) * Tiempo)), PosY1 is ceil(PosY + (Speed * (sin(NewAngle)) * Tiempo)),
 																verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1],Salida), (Salida == 1; Salida == 2; Salida == 3), 
 																eliminarTDAListTDAs(ListPosXY, ListTDAs,[PosX,PosY], ListTDAs1), eliminarTDAListPosXY(ListPosXY, [PosX,PosY], ListPosXY1), 
 																eliminarTDAListTDAs(ListPosXY1, ListTDAs1,[PosX1,PosY1], ListTDAs2), eliminarTDAListPosXY(ListPosXY1, [PosX1,PosY1], ListPosXY2), 
-																actualizarDisparos(Cdr, ListTDAs2, ListPosXY2, NewListTDAs), !.
+																actualizarDisparos(N, M, Cdr, ListTDAs2, ListPosXY2, NewListTDAs), !.
 
-actualizarDisparos([_|Cdr], ListTDAs, ListPosXY, NewListTDAs):- actualizarDisparos(Cdr, ListTDAs, ListPosXY, NewListTDAs), !.
+actualizarDisparos(N, M, [_|Cdr], ListTDAs, ListPosXY, NewListTDAs):- actualizarDisparos(N, M, Cdr, ListTDAs, ListPosXY, NewListTDAs), !.
 
 %Predicado que agrega una Posicion X e Y de la lista que contiene las posiciones X e Y de los TDAs
 %Entrada: -Lista con las posiciones X e Y de los TDAs
@@ -560,6 +566,8 @@ agregarPosXYaListPosXY([Car|Cdr], PosXY, [Car|Cdr1]):- agregarPosXYaListPosXY(Cd
 %Salida: Representacion del escenario del juego en string
 sceneToString(Scene, SceneStr):- checkScene(Scene), obtenerPosicion(Scene, 0, N), obtenerPosicion(Scene, 1, M), crearMatriz(N, M, MatrizDeCeros), obtenerTDAs(Scene, 1, ListTDAs),
 								ponerTDAsEnMatriz(N, M, ListTDAs, MatrizDeCeros, MatrizConTDAs), convertirMatrizAStr(MatrizConTDAs, "\n", SceneStr), !.
+sceneToString(Scene, SceneStr):- Scene == "VICTORY", SceneStr = "VICTORY".
+sceneToString(Scene, SceneStr):- Scene == "DEFEAT", SceneStr = "DEFEAT".
 
 %Predicado que crea una matriz de ceros N x M
 %Entrada: -Cantidad de filas de la matriz
@@ -628,18 +636,16 @@ convertirMatrizAStrFila([Car|Cdr], Str, NewStr):- esSuelo(Car), string_concat(St
 %		  -Angulo del disparo
 %		  -Parametro para generar valores pseudoaleatorios
 %Salida: Nuevo escenario del juego
-play(SceneIn, Member, MoveDir, ShootType, Angle, Seed, SceneOut):- moveMember(SceneIn, Member, MoveDir, _, SceneOut1), ((SceneOut1 == "DEFEAT", SceneOut = "DEFEAT"); (SceneOut1 == "VICTORY", 
-															SceneOut = "VICTORY"); (shoot(SceneOut1, Member, ShootType, Angle, _, SceneOut2), ((SceneOut2 == "DEFEAT", 
+play(SceneIn, Member, MoveDir, ShootType, Angle, Seed, SceneOut):- moveMember(SceneIn, Member, MoveDir, _, SceneOut1), shoot(SceneOut1, Member, ShootType, Angle, _, SceneOut2), ((SceneOut2 == "DEFEAT", 
 															SceneOut = "DEFEAT"); (SceneOut2 == "VICTORY", SceneOut = "VICTORY"); (updateScene(SceneOut2, _, SceneOut3), 
 															((SceneOut3 == "DEFEAT", SceneOut = "DEFEAT"); (SceneOut3 == "VICTORY", SceneOut = "VICTORY"); 
                                                             (obtenerPosicion(SceneOut3, 1, M), obtenerTDAs(SceneOut3, 1, ListTDAs), listGusanosEnemigos(ListTDAs, ListGusEne), length(ListGusEne, Len),
 															numRandom(Seed, Len, NumGusano), NumGusano1 is NumGusano+1, obtenerGusanoEne(ListGusEne, NumGusano1, TDAGusEne), 
 															gusano_getIdGusano(TDAGusEne, MemberEne), numRandom(Seed, M, MovDirEne), MovDirEne1 is floor(MovDirEne-M/2), 
-															moveMemberEnemigo(SceneOut3, MemberEne, MovDirEne1, _, SceneOut4), ((SceneOut4 == "DEFEAT", SceneOut = "DEFEAT"); 
-															(SceneOut4 == "VICTORY", SceneOut = "VICTORY"); (numRandom(Seed, 360, AngleEne), 
+															moveMemberEnemigo(SceneOut3, MemberEne, MovDirEne1, _, SceneOut4), numRandom(Seed, 360, AngleEne), 
 															shootEnemigo(SceneOut4, MemberEne, disparoMRU, AngleEne, _, SceneOut5), ((SceneOut5 == "DEFEAT", SceneOut = "DEFEAT"); 
 															(SceneOut5 == "VICTORY", SceneOut = "VICTORY"); (updateScene(SceneOut5, _, SceneOut6), 
-															((SceneOut6 == "DEFEAT", SceneOut = "DEFEAT"); (SceneOut6 == "VICTORY", SceneOut = "VICTORY"); (SceneOut = SceneOut6)))))))))))), !.
+															((SceneOut6 == "DEFEAT", SceneOut = "DEFEAT"); (SceneOut6 == "VICTORY", SceneOut = "VICTORY"); (SceneOut = SceneOut6)))))))), !.
 %Predicado que crea una lista con los TDAs de los gusanos enemigos
 %Entrada: -Lista con los TDAs del escenario
 %Salida: Lista con los TDAs de los gusanos enemigos
@@ -685,8 +691,13 @@ shootEnemigo(SceneIn, Member, ShootType, Angle, _, SceneOut):- ShootType == disp
 														obtenerPosXY(ListTDAs, ListPosXY), buscarGusano(ListTDAs, 0, Member, TDAGusano), gusano_getPosX(TDAGusano, PosX), gusano_getPosY(TDAGusano, PosY), 
 														velocidad(Speed), t(Tiempo), getRad(Angle, NewAngle), PosX1 is ceil(PosX + (Speed * (cos(NewAngle)) * Tiempo)), 
 														PosY1 is ceil(PosY + (Speed * (sin(NewAngle)) * Tiempo)), verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1], Salida), Salida == 0, 
-														disparo(2, Angle, Speed, PosX1, PosY1, TDADisparo), agregarTDAaListTDAs(ListTDAs, TDADisparo, ListTDAs1), !, SceneOut = [N, M|ListTDAs1].
-
+														PosX1 > 0, PosX1 =< M, PosY1 > 0, PosY1 =< N, disparo(2, Angle, Speed, PosX1, PosY1, TDADisparo), 
+														agregarTDAaListTDAs(ListTDAs, TDADisparo, ListTDAs1), SceneOut = [N, M|ListTDAs1], !.
+shootEnemigo(SceneIn, Member, ShootType, Angle, _, SceneOut):- ShootType == disparoMRU, checkScene(SceneIn), obtenerPosicion(SceneIn, 0, N),obtenerPosicion(SceneIn, 1, M),obtenerTDAs(SceneIn, 1, ListTDAs),
+														obtenerPosXY(ListTDAs, ListPosXY), buscarGusano(ListTDAs, 0, Member, TDAGusano), gusano_getPosX(TDAGusano, PosX), gusano_getPosY(TDAGusano, PosY), 
+														velocidad(Speed), t(Tiempo), getRad(Angle, NewAngle), PosX1 is ceil(PosX + (Speed * (cos(NewAngle)) * Tiempo)), 
+														PosY1 is ceil(PosY + (Speed * (sin(NewAngle)) * Tiempo)), verificarPosOcupadaXY(ListPosXY, ListTDAs, [PosX1,PosY1], Salida), Salida == 0, 
+														(PosX1 =< 0; PosX1 > M; PosY1 =< 0; PosY1 > N), SceneOut = [N, M|ListTDAs], !.
 shootEnemigo(SceneIn, Member, ShootType, Angle, _, SceneOut):- ShootType == disparoMRU, checkScene(SceneIn), obtenerPosicion(SceneIn, 0, N),obtenerPosicion(SceneIn, 1, M),obtenerTDAs(SceneIn, 1, ListTDAs),
 														obtenerPosXY(ListTDAs, ListPosXY), buscarGusano(ListTDAs, 0, Member, TDAGusano), gusano_getPosX(TDAGusano, PosX), gusano_getPosY(TDAGusano, PosY), 
 														velocidad(Speed), t(Tiempo), getRad(Angle, NewAngle), PosX1 is ceil(PosX + (Speed * (cos(NewAngle)) * Tiempo)), 
